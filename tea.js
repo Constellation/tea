@@ -2,6 +2,7 @@
  * Tea.js
  *
  * have a good tea time.
+ *
  */
 
 if (typeof(Tea) == 'undefined') Tea = function(){};
@@ -154,6 +155,9 @@ Tea.DOM = new Tea.Class({
     var cnlist = cn.toLowerCase().split(/\s+/);
     cnlist.splice(Tea.Array.indexOf(cnlist, name), 1);
     e.className = cnlist.join(' ');
+  },
+
+  createDOM: function(src){
   },
 });
 
