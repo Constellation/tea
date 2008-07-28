@@ -96,7 +96,14 @@ Tea.Array = {
       s = f(s, e, ++r);
     });
     return s;
-  }
+  },
+
+  uniq: function(a){
+    return Tea.Array.reduce(a, function(e, r, arr){
+      if(Tea.Array.indexOf(e,r) == -1) e.push(r);
+      return e;
+    }, []);
+  },
 }
 
 /* Tea.Listener */
