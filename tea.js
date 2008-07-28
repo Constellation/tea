@@ -22,10 +22,6 @@ Tea.Class = function(o, p){
 }
 
 Tea.Function = {
-  bind: function(f, t){
-    return function(){ return f.apply(t, arguments) };
-  },
-
   addBefore: function(o, m, f){
     if(!o[m]) return false;
     var original = o[m];
@@ -92,6 +88,12 @@ Tea.Array = {
     });
     return ret;
   },
+
+  reduce: function(a, f, s){
+    s = s? f(s, a.shift(), 0) : a.shift();
+    Tea.Array.forEach(a, function(e, r, arr){
+      s = f(s, e, ++r);
+    });
 }
 
 /* Tea.Listener */
@@ -115,7 +117,7 @@ Tea.Listener = new Tea.Class({
 
 Tea.DOM = new Tea.Class({
   getElementsByClassName: function(name, elm){
-    elm = elm || document;
+    elm || elm = document;
     var ret = [];
     (function(e){
       var f = arguments.callee;
