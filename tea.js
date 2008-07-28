@@ -44,9 +44,7 @@ Tea.Array = {
   },
 
   isArray: function(a){
-    if(a instanceof Array || (a && typeof(a.length) == 'number' && typeof(a) != 'string'))
-      return true;
-    return false;
+    return (a instanceof Array || (a && typeof(a.length) == 'number' && typeof(a) != 'string'))
   },
 
   flatten: function(a){
@@ -147,8 +145,8 @@ Tea.DOM = new Tea.Class({
 
   removeClassName: function(e, name){
     var cn = e.className || '';
-    name = name.toLowerCase();
     if(!Tea.DOM.hasClassName(e, name)) return;
+    name = name.toLowerCase();
     var cnlist = cn.toLowerCase().split(/\s+/);
     cnlist.splice(Tea.Array.indexOf(cnlist, name), 1);
     e.className = cnlist.join(' ');
