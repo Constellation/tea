@@ -94,6 +94,8 @@ Tea.Array = {
     Tea.Array.forEach(a, function(e, r, arr){
       s = f(s, e, ++r);
     });
+    return s;
+  }
 }
 
 /* Tea.Listener */
