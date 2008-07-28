@@ -119,7 +119,7 @@ Tea.Listener = new Tea.Class({
 
 Tea.DOM = new Tea.Class({
   getElementsByClassName: function(name, elm){
-    elm || elm = document;
+    elm || (elm = document);
     var ret = [];
     (function(e){
       var f = arguments.callee;
