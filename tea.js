@@ -345,7 +345,8 @@ Tea.Util = new Tea.Class({
     },{
     stop: function(){
       return (new Date).getTime() - this.t;
-    })
+    }
+  })
 });
 
 
