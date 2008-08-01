@@ -252,19 +252,23 @@ Tea.Chain = new Tea.Class({
   addCallback: function(fun, time){ return this._add(fun, 'ok', time) },
   addErrorback: function(fun, time){ return this._add(fun, 'er', time) },
   later: function(time){ this._active.time = time;return this },
-  succeed: function(res){
+  succeed: function(){
     var self = this;
+    var args = arguments.push('ok');
     var id = setTimeout(function(){
         clearTimeout(id);
-        self._go.call(self, res, 'ok');
+        self._go.apply(self, args);
     }, 0);
+    return this;
   },
-  failed: function(res){
+  failed: function(){
     var self = this;
+    var args = arguments.push('ok');
     var id = setTimeout(function(){
         clearTimeout(id);
-        self._go(res, 'er');
+        self._go.apply(self, args);
     }, 0);
+    return this;
   },
 });
 
