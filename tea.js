@@ -30,7 +30,7 @@ Tea.Function = {
       f.apply(o, arguments);
       return original.apply(o, arguments);
     }
-  },
+  }
 }
 
 Tea.Array = {
@@ -125,6 +125,7 @@ Tea.Object = {
     for(var i in obj) ret.push(i);
     return ret;
   },
+
   values: function(obj){
     var ret = [];
     for(var i in obj) ret.push(obj[i]);
@@ -209,6 +210,10 @@ Tea.Chain = new Tea.Class({
         value[index] = [true, res];
         if(++c==num) ret.succeed(value);
       });
+      d.addErrorback(function(res){
+        value[index] = [false, res];
+        if(++c==num ret.succeed(value);
+      });
     });
     return ret;
   },
@@ -252,7 +257,7 @@ Tea.Chain = new Tea.Class({
     if(res instanceof Tea.Chain){
       Tea.Array.last(res._list).time = pair.time;
       res._list = res._list.concat(this._list);
-    }else if(this._list.length > 0){
+    } else if(this._list.length > 0){
       if(pair.time){
         var time = (new Date).getTime();
         var id = setTimeout(function(){
@@ -286,6 +291,51 @@ Tea.Chain = new Tea.Class({
     return this;
   },
 });
+
+Tea.XHR = new Tea.Class({
+  init: function(url, opt){
+    var req=Tea.XHR.getXHR(), ret=new Tea.Chain();
+    opt || (opt = {});
+    opt.method || (opt.method = 'GET');
+    opt.data || (opt.data = null);
+    req.onreadystatechange = function(e){
+      if(req.readyState == 4){
+        if(req.status >= 200 && req.status <200)
+          ret.succeed(req);
+        else
+          ret.failed(req);
+      }
+    }
+    req.open(opt.method, url, true);
+    if(opt.overrideMimeType && req.overrideMimeType) req.overrideMimeType(opt.overrideMimeType);
+    if(opt.header){
+      for(var i in opt.header)
+        req.setRequestHeader(i, opt.header[i]);
+    }
+    if(opt.method=='POST') req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    req.send(opt.data);
+    return ret;
+  },
+  },{
+
+  getXHR: function(){
+    for(var i=0,l=Tea.XHRs.length;i<l;i++){
+      try {
+        return Tea.XHRs[i]();
+      } catch(e){}
+    }
+  },
+
+  XHRs: {
+    function(){ return new XMLHttpRequest(); },
+    function(){ return new ActiveXObject('Msxml2.XMLHTTP'); },
+    function(){ return new ActiveXObject('Microsoft.XMLHTTP'); },
+    function(){ return new ActiveXObject('Msxml2.XMLHTTP.4.0'); },
+  },
+});
+
+
+
 
 function log(){
   if(window.console && console.info) console.info.apply(console, arguments);
