@@ -239,7 +239,7 @@ Tea.Chain = new Tea.Class({
       res._list = res._list.concat(this._list);
     }else if(this._list.length > 0){
       if(this._list[0].time){
-        var time = (new Date).getTime());
+        var time = (new Date).getTime();
         var id = setTimeout(function(){
           clearTimeout(id);
           self._go.call(self, res, next, (new Date).getTime() - time);
