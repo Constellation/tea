@@ -104,6 +104,10 @@ Tea.Array = {
       return e;
     }, []);
   },
+
+  list: function(arr){
+    return Tea.Array.map(arr, function(e){ return e});
+  },
 }
 
 /* Tea.Object */
@@ -254,7 +258,7 @@ Tea.Chain = new Tea.Class({
   later: function(time){ this._active.time = time;return this },
   succeed: function(){
     var self = this;
-    var args = arguments.push('ok');
+    var args = Tea.Array.list(arguments).push('ok');
     var id = setTimeout(function(){
         clearTimeout(id);
         self._go.apply(self, args);
@@ -263,7 +267,7 @@ Tea.Chain = new Tea.Class({
   },
   failed: function(){
     var self = this;
-    var args = arguments.push('ok');
+    var args = Tea.Array.list(arguments).push('ok');
     var id = setTimeout(function(){
         clearTimeout(id);
         self._go.apply(self, args);
