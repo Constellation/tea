@@ -239,12 +239,11 @@ Tea.Chain = new Tea.Class({
     this._list.push(pair);
     return this;
   },
-  _pair: function(){},
-  _pair.prototype: {
-    ok: function(res){ return res},
-    er: function(res){ throw res },
-    time: 0
-  },
+  _pair: new Tea.Class({},{
+    ok: function(res){ return res },
+    er: function(res){ throw  res },
+    time: 0,
+  });
   _go: function(res, okng, t){
     var self=this, next='ok', pair=this._list.shift();
     try {
