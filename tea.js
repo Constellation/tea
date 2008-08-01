@@ -278,7 +278,7 @@ Tea.Chain = new Tea.Class({
     time || (time = 0);
     var id = setTimeout(function(){
         clearTimeout(id);
-        self._go.call(self, res, 'ok');
+        self._go.call(self, res, 'ok', time);
     }, time);
     return this;
   },
@@ -288,7 +288,7 @@ Tea.Chain = new Tea.Class({
     time || (time = 0);
     var id = setTimeout(function(){
         clearTimeout(id);
-        self._go.call(self, res, 'er');
+        self._go.call(self, res, 'er', time);
     }, time);
     return this;
   },
