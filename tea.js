@@ -239,38 +239,31 @@ Tea.Chain = new Tea.Class({
     time: 0,
   }),
   loop: function(n, fun){
-    var ret=new Tea.Chain();
-    function _loop(i){
-      var self = this;
-      if(i<=n){
-        var r = fun.call(this, i++);
-        if(r instanceof Tea.Chain){
-          r.addCallback(function(res){
-            _loop.call(self, i);
-          });
-        } else {
-          this.addCallback(function(res){
-            _loop.call(self, i);
-          });
-        }
-      } else {
-        return r;
-      }
-    }
-    ret.succeed(0);
-    return ret.addCallback(_loop);
+    var ret= new Tea.Chain(), arr = [];
+    for(var i=0;i<n;arr.push(i++));
+    Tea.Array.forEach(arr, function(e){
+      ret.addCallback(function(res){
+        return fun.call(this, e);
+      });
+    });
+    return ret.succeed();
   },
   later: function(t){
-    var ret=new Tea.Chain();
-    ret.succeed(null, t);
-    return ret;
+    return (new Tea.Chain()).succeed(null, t);
   }
 },{
-  _add: function(fun, oker, t){
+  _push: function(fun, oker, t){
     var pair = this._active = new Tea.Chain._pair();
     t && (pair.time = t);
     pair[oker] = fun;
     this._list.push(pair);
+    return this;
+  },
+  _unshift: function(fun, oker, t){
+    var pair = this._active = new Tea.Chain._pair();
+    t && (pair.time = t);
+    pair[oker] = fun;
+    this._list.unshift(pair);
     return this;
   },
   _go: function(res, oker, t){
@@ -282,8 +275,8 @@ Tea.Chain = new Tea.Class({
       next = 'er';
     }
     if(res instanceof Tea.Chain){
-      Tea.Array.last(res._list).time = pair.time;
       res._list = res._list.concat(this._list);
+      Tea.Array.last(res._list).time = pair.time;
     } else if(this._list.length > 0){
       if(pair.time){
         var timer = new Tea.Util.timer();
@@ -306,8 +299,10 @@ Tea.Chain = new Tea.Class({
     }, t*1000);
     return this;
   },
-  addCallback:  function(fun, t){ return this._add(fun, 'ok', t) },
-  addErrorback: function(fun, t){ return this._add(fun, 'er', t) },
+  addCallback:  function(fun, t){ return this._push(fun, 'ok', t) },
+  addErrorback: function(fun, t){ return this._push(fun, 'er', t) },
+  addCallbackBefore:  function(fun, t){ return this._unshift(fun, 'ok', t) },
+  addErrorbackBefore: function(fun, t){ return this._unshift(fun, 'er', t) },
   later: function(t){ this._active.time = t; return this },
   succeed: function(res, t){ return this._start(res, 'ok', t)  },
   failed:  function(res, t){ return this._start(res, 'er', t)  },
