@@ -337,14 +337,15 @@ Tea.XHR = new Tea.Class({
   }
 );
 
-Tea.Util.timer = new Tea.Class({
-  init: function(){
-    this.t = (new Date).getTime();
-  }
-  },{
-  stop: function(){
-    return (new Date).getTime() - this.t;
-  }
+Tea.Util = new Tea.Class({
+  timer: new Tea.Class({
+    init: function(){
+      this.t = (new Date).getTime();
+    }
+    },{
+    stop: function(){
+      return (new Date).getTime() - this.t;
+    })
 });
 
 
