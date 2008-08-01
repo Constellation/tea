@@ -284,6 +284,7 @@ Tea.Chain = new Tea.Class({
   later: function(t){ this._active.time = t; return this },
   succeed: function(res, t){ return this._start(res, 'ok', t)  },
   failed:  function(res, t){ return this._start(res, 'er', t)  },
+  startback: function(res, t){
 });
 
 Tea.XHR = new Tea.Class({
