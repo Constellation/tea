@@ -106,6 +106,20 @@ Tea.Array = {
   },
 }
 
+/* Tea.Object */
+Tea.Object = {
+  keys: function(obj){
+    var ret = [];
+    for(var i in obj) ret.push(i);
+    return ret;
+  },
+  values: function(obj){
+    var ret = [];
+    for(var i in obj) ret.push(obj[i]);
+    return ret;
+  },
+}
+
 /* Tea.Listener */
 Tea.Listener = new Tea.Class({
   init: function(){
@@ -167,6 +181,91 @@ Tea.DOM = new Tea.Class({
   createDOM: function(src){
   },
 });
+
+Tea.Selector = {};
+
+/* Tea Chain */
+Tea.Chain = new Tea.Class({
+  init: function(){
+    this._list = [];
+    this._active = null;
+  },
+  list: function(list){
+    var ret=new Tea.Chain(), num=list.length, c=0, value=[];
+    Tea.Array.forEach(list, function(d, index){
+      d.addCallback(function(res){
+        value[index] = [true, res];
+        if(++c==num) ret.succeed(value);
+      });
+    });
+    return ret;
+  },
+  hash: function(obj){
+    var keys=[], values=[];
+    for (var i in obj){
+      keys.push(i);
+      values.push(obj[i]);
+    }
+    return Tea.Chain.list(values).addCallback(function(res){
+      var h = {}
+      Tea.Array.forEach(res, function(e, index){
+        h[keys[index]]=e;
+      });
+      return h
+    });
+  },
+},{
+  _add: function(fun, okng){
+    var pair = new this._pair();
+    this._active = pair[okng] = fun;
+    this._list.push(pair);
+    return this;
+  },
+  _pair: function(){
+    return {
+      ok: function(res){return res},
+      error: function(res){throw res}
+    }
+  },
+  _go: function(res, okng, t){
+    var self=this, next='ok', pair=this._list.shift();
+    try {
+      res = pair[okng].call(this, res, t);
+    } catch(e) {
+      res = e;
+      next = 'er';
+    }
+    if(res instanceof Tea.Chain){
+      res._list = res._list.concat(this._list);
+    }else if(this._list.length > 0){
+      if(this._list[0].time){
+        var time = (new Date).getTime());
+        var id = setTimeout(function(){
+          clearTimeout(id);
+          self._go.call(self, res, next, (new Date).getTime() - time);
+        }, this._list[0].time*1000)
+      else this._go(res, next, 0);
+    }
+    return this;
+  },
+  addCallback: function(fun, time){ return this._add(fun, 'ok', time) },
+  addErrorback: function(fun, time){ return this._add(fun, 'er', time) },
+  later: function(time){ this._active.time = time;return this },
+  succeed: function(res){
+    var self = this;
+    var id = setTimeout(function(){
+        clearTimeout(id);
+        self._go.call(self, res, 'ok');
+    }, 0);
+  },
+  failed: function(res){
+    var self = this;
+    var id = setTimeout(function(){
+        clearTimeout(id);
+        self._go(res, 'er');
+    }, 0);
+  },
+}
 
 function log(){
   if(window.console && console.info) console.info.apply(console, arguments);
