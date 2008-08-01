@@ -238,6 +238,33 @@ Tea.Chain = new Tea.Class({
     er: function(res){ throw  res },
     time: 0,
   }),
+  loop: function(n, fun){
+    var ret=new Tea.Chain();
+    function _loop(i){
+      var self = this;
+      if(i<=n){
+        var r = fun.call(this, i++);
+        if(r instanceof Tea.Chain){
+          r.addCallback(function(res){
+            _loop.call(self, i);
+          });
+        } else {
+          this.addCallback(function(res){
+            _loop.call(self, i);
+          });
+        }
+      } else {
+        return r;
+      }
+    }
+    ret.succeed(0);
+    return ret.addCallback(_loop);
+  },
+  later: function(t){
+    var ret=new Tea.Chain();
+    ret.succeed(null, t);
+    return ret;
+  }
 },{
   _add: function(fun, oker, t){
     var pair = this._active = new Tea.Chain._pair();
