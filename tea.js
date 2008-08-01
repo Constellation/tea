@@ -231,19 +231,19 @@ Tea.Chain = new Tea.Class({
       return h
     });
   },
-},{
-  _add: function(fun, okng, time){
-    var pair = this._active = new this._pair();
-    time && (pair.time = time);
-    pair[okng] = fun;
-    this._list.push(pair);
-    return this;
-  },
   _pair: new Tea.Class({},{
     ok: function(res){ return res },
     er: function(res){ throw  res },
     time: 0,
   }),
+},{
+  _add: function(fun, okng, time){
+    var pair = this._active = new Tea.Chain._pair();
+    time && (pair.time = time);
+    pair[okng] = fun;
+    this._list.push(pair);
+    return this;
+  },
   _go: function(res, okng, t){
     var self=this, next='ok', pair=this._list.shift();
     try {
