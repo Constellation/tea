@@ -237,7 +237,7 @@ Tea.Chain = new Tea.Class({
   _pair: function(){
     return {
       ok: function(res){return res},
-      error: function(res){throw res},
+      er: function(res){throw res},
       time : 0
     }
   },
