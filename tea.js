@@ -275,7 +275,7 @@ Tea.Chain = new Tea.Class({
   succeed: function(res, time){
     var self = this, timer=null;
     res || (res = null);
-    (time && timer = new Tea.Util.timer() )|| (time = 0);
+    (time && (timer = new Tea.Util.timer())) || (time = 0);
     var id = setTimeout(function(){
         clearTimeout(id);
         self._go.call(self, res, 'ok', (timer)? timer.stop() : 0);
@@ -285,7 +285,7 @@ Tea.Chain = new Tea.Class({
   failed: function(res, time){
     var self = this, timer=null;
     res || (res = null);
-    (time && timer = new Tea.Util.timer() )|| (time = 0);
+    (time && (timer = new Tea.Util.timer())) || (time = 0);
     var id = setTimeout(function(){
         clearTimeout(id);
         self._go.call(self, res, 'er', (timer)? timer.stop() : 0);
