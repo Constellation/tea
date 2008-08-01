@@ -46,15 +46,15 @@ Tea.Array = {
 
   flatten: function(a){
     var ret = [];
-    (function(arr){
-      var f = arguments.callee;
+    var f = function(arr){
       Tea.Array.forEach(arr, function(e){
         if(Tea.Array.isArray(e))
           f(e);
         else
           ret.push(e);
       });
-    })(a)
+    }
+    f(a);
     return ret;
   },
 
