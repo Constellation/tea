@@ -203,22 +203,24 @@ Tea.Chain = new Tea.Class({
     this._list = [];
     this._active = null;
   },
-  list: function(list){
+  list: function(list, time){
     var ret=new Tea.Chain(), num=list.length, c=0, value=[];
+    time || (time = null);
     Tea.Array.forEach(list, function(d, index){
       d.addCallback(function(res){
         value[index] = [true, res];
-        if(++c==num) ret.succeed(value);
+        if(++c==num) ret.succeed(value, time);
       });
       d.addErrorback(function(res){
         value[index] = [false, res];
-        if(++c==num) ret.succeed(value);
+        if(++c==num) ret.succeed(value, time);
       });
     });
     return ret;
   },
-  hash: function(obj){
+  hash: function(obj, time){
     var keys=[], values=[];
+    time || (time = null);
     for (var i in obj){
       keys.push(i);
       values.push(obj[i]);
@@ -229,7 +231,7 @@ Tea.Chain = new Tea.Class({
         h[keys[index]]=e;
       });
       return h
-    });
+    }, time);
   },
   _pair: new Tea.Class({},{
     ok: function(res){ return res },
@@ -270,22 +272,24 @@ Tea.Chain = new Tea.Class({
   addCallback: function(fun, time){ return this._add(fun, 'ok', time) },
   addErrorback: function(fun, time){ return this._add(fun, 'er', time) },
   later: function(time){ this._active.time = time; return this },
-  succeed: function(res){
+  succeed: function(res, time){
     var self = this;
     res || (res = null);
+    time || (time = 0);
     var id = setTimeout(function(){
         clearTimeout(id);
         self._go.call(self, res, 'ok');
-    }, 0);
+    }, time);
     return this;
   },
-  failed: function(res){
+  failed: function(res, time){
     var self = this;
     res || (res = null);
+    time || (time = 0);
     var id = setTimeout(function(){
         clearTimeout(id);
         self._go.call(self, res, 'er');
-    }, 0);
+    }, time);
     return this;
   },
 });
