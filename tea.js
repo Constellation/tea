@@ -212,7 +212,7 @@ Tea.Chain = new Tea.Class({
       });
       d.addErrorback(function(res){
         value[index] = [false, res];
-        if(++c==num ret.succeed(value);
+        if(++c==num) ret.succeed(value);
       });
     });
     return ret;
