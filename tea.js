@@ -259,10 +259,10 @@ Tea.Chain = new Tea.Class({
       res._list = res._list.concat(this._list);
     } else if(this._list.length > 0){
       if(pair.time){
-        var time = (new Date).getTime();
+        var timer = new Tea.Util.timer();
         var id = setTimeout(function(){
           clearTimeout(id);
-          self._go.call(self, res, next, (new Date).getTime() - time);
+          self._go.call(self, res, next, timer.stop());
         }, pair.time*1000);
       }
       else this._go(res, next, pair.time);
@@ -273,23 +273,23 @@ Tea.Chain = new Tea.Class({
   addErrorback: function(fun, time){ return this._add(fun, 'er', time) },
   later: function(time){ this._active.time = time; return this },
   succeed: function(res, time){
-    var self = this;
+    var self = this, timer=null;
     res || (res = null);
-    time || (time = 0);
+    (time && timer = new Tea.Util.timer() )|| (time = 0);
     var id = setTimeout(function(){
         clearTimeout(id);
-        self._go.call(self, res, 'ok', time);
-    }, time);
+        self._go.call(self, res, 'ok', (timer)? timer.stop() : 0);
+    }, time*1000);
     return this;
   },
   failed: function(res, time){
-    var self = this;
+    var self = this, timer=null;
     res || (res = null);
-    time || (time = 0);
+    (time && timer = new Tea.Util.timer() )|| (time = 0);
     var id = setTimeout(function(){
         clearTimeout(id);
-        self._go.call(self, res, 'er', time);
-    }, time);
+        self._go.call(self, res, 'er', (timer)? timer.stop() : 0);
+    }, time*1000);
     return this;
   },
 });
@@ -337,7 +337,15 @@ Tea.XHR = new Tea.Class({
   }
 );
 
-
+Tea.Util.timer = new Tea.Class({
+  init: function(){
+    this.t = (new Date).getTime();
+  }
+  },{
+  stop: function(){
+    return (new Date).getTime() - this.t;
+  }
+});
 
 
 function log(){
