@@ -237,17 +237,17 @@ Tea.Chain = new Tea.Class({
     time: 0,
   }),
 },{
-  _add: function(fun, okng, time){
+  _add: function(fun, oker, time){
     var pair = this._active = new Tea.Chain._pair();
     time && (pair.time = time);
-    pair[okng] = fun;
+    pair[oker] = fun;
     this._list.push(pair);
     return this;
   },
-  _go: function(res, okng, t){
+  _go: function(res, oker, t){
     var self=this, next='ok', pair=this._list.shift();
     try {
-      res = pair[okng].call(this, res, t);
+      res = pair[oker].call(this, res, t);
     } catch(e) {
       res = e;
       next = 'er';
