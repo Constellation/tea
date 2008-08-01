@@ -243,7 +243,8 @@ Tea.Chain = new Tea.Class({
         var id = setTimeout(function(){
           clearTimeout(id);
           self._go.call(self, res, next, (new Date).getTime() - time);
-        }, this._list[0].time*1000)
+        }, this._list[0].time*1000);
+      }
       else this._go(res, next, 0);
     }
     return this;
