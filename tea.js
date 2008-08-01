@@ -266,7 +266,7 @@ Tea.Chain = new Tea.Class({
         self._go(res, 'er');
     }, 0);
   },
-}
+});
 
 function log(){
   if(window.console && console.info) console.info.apply(console, arguments);
