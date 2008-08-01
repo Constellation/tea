@@ -105,8 +105,16 @@ Tea.Array = {
     }, []);
   },
 
+  first: function(arr){
+    return arr[0];
+  },
+
+  last: function(arr){
+    return arr[arr.length-1];
+  },
+
   list: function(arr){
-    return Tea.Array.map(arr, function(e){ return e});
+    return Array.prototype.slice.call(arr);
   },
 }
 
@@ -219,16 +227,18 @@ Tea.Chain = new Tea.Class({
     });
   },
 },{
-  _add: function(fun, okng){
-    var pair = new this._pair();
-    this._active = pair[okng] = fun;
+  _add: function(fun, okng, time){
+    var pair = this._active = new this._pair();
+    time && (pair.time = time);
+    pair[okng] = fun;
     this._list.push(pair);
     return this;
   },
   _pair: function(){
     return {
       ok: function(res){return res},
-      error: function(res){throw res}
+      error: function(res){throw res},
+      time : 0
     }
   },
   _go: function(res, okng, t){
@@ -240,37 +250,38 @@ Tea.Chain = new Tea.Class({
       next = 'er';
     }
     if(res instanceof Tea.Chain){
+      Tea.Array.last(res._list).time = pair.time;
       res._list = res._list.concat(this._list);
     }else if(this._list.length > 0){
-      if(this._list[0].time){
+      if(pair.time){
         var time = (new Date).getTime();
         var id = setTimeout(function(){
           clearTimeout(id);
           self._go.call(self, res, next, (new Date).getTime() - time);
-        }, this._list[0].time*1000);
+        }, pair.time*1000);
       }
-      else this._go(res, next, 0);
+      else this._go(res, next, pair.time);
     }
     return this;
   },
   addCallback: function(fun, time){ return this._add(fun, 'ok', time) },
   addErrorback: function(fun, time){ return this._add(fun, 'er', time) },
-  later: function(time){ this._active.time = time;return this },
-  succeed: function(){
+  later: function(time){ this._active.time = time; return this },
+  succeed: function(res){
     var self = this;
-    var args = Tea.Array.list(arguments).push('ok');
+    res || (res = null);
     var id = setTimeout(function(){
         clearTimeout(id);
-        self._go.apply(self, args);
+        self._go.call(self, res, 'ok');
     }, 0);
     return this;
   },
-  failed: function(){
+  failed: function(res){
     var self = this;
-    var args = Tea.Array.list(arguments).push('ok');
+    res || (res = null);
     var id = setTimeout(function(){
         clearTimeout(id);
-        self._go.apply(self, args);
+        self._go.call(self, res, 'er');
     }, 0);
     return this;
   },
