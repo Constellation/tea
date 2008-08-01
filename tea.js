@@ -300,7 +300,7 @@ Tea.XHR = new Tea.Class({
     opt.data || (opt.data = null);
     req.onreadystatechange = function(e){
       if(req.readyState == 4){
-        if(req.status >= 200 && req.status <200)
+        if (req.status >= 200 && req.status < 300)
           ret.succeed(req);
         else
           ret.failed(req);
@@ -316,12 +316,11 @@ Tea.XHR = new Tea.Class({
     req.send(opt.data);
     return ret;
   },
-  },{
 
   getXHR: function(){
-    for(var i=0,l=Tea.XHRs.length;i<l;i++){
+    for(var i=0,l=Tea.XHR.XHRs.length;i<l;i++){
       try {
-        return Tea.XHRs[i]();
+        return Tea.XHR.XHRs[i]();
       } catch(e){}
     }
   },
@@ -332,7 +331,9 @@ Tea.XHR = new Tea.Class({
     function(){ return new ActiveXObject('Microsoft.XMLHTTP'); },
     function(){ return new ActiveXObject('Msxml2.XMLHTTP.4.0'); },
   ],
-});
+
+  }
+);
 
 
 
