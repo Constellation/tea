@@ -201,7 +201,6 @@ Tea.Selector = {};
 Tea.Chain = new Tea.Class({
   init: function(){
     this._list = [];
-    this._active = null;
   },
   list: function(list, time){
     var ret=new Tea.Chain(), num=list.length, c=0, value=[];
@@ -256,18 +255,18 @@ Tea.Chain = new Tea.Class({
   addErrorback: function(fun, t){ return this._push(fun, 'er', t) },
   addCallbackBefore:  function(fun, t){ return this._unshift(fun, 'ok', t) },
   addErrorbackBefore: function(fun, t){ return this._unshift(fun, 'er', t) },
-  later: function(t){ return this._later(t) },
+  later:        function(t){ return this._later(t) },
   succeed: function(res, t){ return this._start(res, 'ok', t)  },
   failed:  function(res, t){ return this._start(res, 'er', t)  },
   _push: function(fun, oker, t){
-    var pair = this._active = new Tea.Chain._pair();
+    var pair =  new Tea.Chain._pair();
     t && (pair.time = t);
     pair[oker] = fun;
     this._list.push(pair);
     return this;
   },
   _unshift: function(fun, oker, t){
-    var pair = this._active = new Tea.Chain._pair();
+    var pair = new Tea.Chain._pair();
     t && (pair.time = t);
     pair[oker] = fun;
     this._list.unshift(pair);
@@ -275,7 +274,7 @@ Tea.Chain = new Tea.Class({
   },
   _later: function(t){
     if(!t) return this;
-    var pair = this._active = new Tea.Chain._pair();
+    var pair = new Tea.Chain._pair();
     t? (pair.time = t) : (pair.time = 0);
     this._list.push(pair);
     return this;
