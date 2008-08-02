@@ -274,7 +274,7 @@ Tea.Chain = new Tea.Class({
     return this;
   },
   _later: function(t){
-    t || return this;
+    if(!t) return this;
     var pair = this._active = new Tea.Chain._pair();
     t? (pair.time = t) : (pair.time = 0);
     this._list.push(pair);
