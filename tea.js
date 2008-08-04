@@ -368,11 +368,17 @@ Tea.JSONP = new Tea.Class({
     var script = document.createElement('script'),
         ret = new Tea.Chain(),
         params = [],
-        time = (new Date).getTime().toString();
+        name = 'callback'+(Tea.JSONP.id++);
     opt      || (opt = {});
     opt.data || (opt.data = {});
 
-    opt.data.callback = 'Tea.JSONP.callbacks['+time+']';
+    opt.data.callback = 'Tea.JSONP.callbacks.'+name;
+    Tea.JSONP.callbacks[name] = function(json){
+      delete Tea.JSONP.callbacks[name];
+      document.getElementsByTagName('head')[0].removeChild(script);
+      ret.succeed(json);
+    }
+
     for(var d in opt.data)
       if(opt.data.hasOwnProperty(d))
         params.push(encodeURIComponent(d)+'='+encodeURIComponent(opt.data[d]));
@@ -384,14 +390,10 @@ Tea.JSONP = new Tea.Class({
     script.src     = url;
     document.getElementsByTagName('head')[0].appendChild(script);
 
-    Tea.JSONP.callbacks[time] = function(json){
-      delete Tea.JSONP.callbacks[time];
-      document.getElementsByTagName('head')[0].removeChild(script);
-      ret.succeed(json);
-    }
     return ret;
   },
   callbacks: {},
+  id: 0,
 });
 
 Tea.Util = new Tea.Class({
