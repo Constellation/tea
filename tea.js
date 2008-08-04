@@ -390,7 +390,7 @@ Tea.JSONP = new Tea.Class({
       ret.succeed(json);
     }
     return ret;
-  }
+  },
   callbacks: {},
 });
 
