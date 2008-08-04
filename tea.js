@@ -382,18 +382,17 @@ Tea.JSONP = new Tea.Class({
     script.type    = 'text/javascript';
     script.charset = 'utf-8';
     script.src     = url;
-    Tea.JSONP.head.appendChild(script);
+    document.getElementsByTagName('head')[0].appendChild(script);
 
     Tea.JSONP.callbacks[time] = function(json){
       delete Tea.JSONP.callbacks[time];
-      Tea.JSONP.head.removeChild(script);
+      document.getElementsByTagName('head')[0].removeChild(script);
       ret.succeed(json);
     }
     return ret;
   }
   },{
   callbacks: {},
-  head: document.getElementsByTagName('head')[0]
 });
 
 Tea.Util = new Tea.Class({
