@@ -189,13 +189,8 @@ Tea.DOM = new Tea.Class({
     var cnlist = cn.toLowerCase().split(/\s+/);
     cnlist.splice(Tea.Array.indexOf(cnlist, name), 1);
     e.className = cnlist.join(' ');
-  },
-
-  createDOM: function(src){
-  },
+  }
 });
-
-Tea.Selector = {};
 
 /* Tea Chain */
 Tea.Chain = new Tea.Class({
@@ -316,10 +311,18 @@ Tea.Chain = new Tea.Class({
 
 Tea.XHR = new Tea.Class({
   init: function(url, opt){
-    var req=Tea.XHR.getXHR(), ret=new Tea.Chain();
-    opt || (opt = {});
+    var req = Tea.XHR.getXHR(),
+        ret = new Tea.Chain(),
+        params = [];
+    opt        || (opt = {});
     opt.method || (opt.method = 'GET');
-    opt.data || (opt.data = null);
+    opt.data   || (opt.data = {});
+
+    for(var d in opt.data)
+      if(opt.data.hasOwnProperty(d))
+        params.push(encodeURIComponent(d)+'='+encodeURIComponent(opt.data[d]));
+    params = params.join('&');
+
     req.onreadystatechange = function(e){
       if(req.readyState == 4){
         if (req.status >= 200 && req.status < 300)
@@ -329,13 +332,16 @@ Tea.XHR = new Tea.Class({
       }
     }
     req.open(opt.method, url, true);
-    if(opt.overrideMimeType && req.overrideMimeType) req.overrideMimeType(opt.overrideMimeType);
+    if(opt.overrideMimeType && req.overrideMimeType)
+      req.overrideMimeType(opt.overrideMimeType);
     if(opt.header){
       for(var i in opt.header)
-        req.setRequestHeader(i, opt.header[i]);
+       if (opt.header.hasOwnProperty(i))
+         req.setRequestHeader(i, opt.header[i]);
     }
-    if(opt.method=='POST') req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    req.send(opt.data);
+    if(opt.method.toUpperCase()=='POST')
+      req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    req.send(params);
     return ret;
   },
 
@@ -357,14 +363,51 @@ Tea.XHR = new Tea.Class({
   }
 );
 
+Tea.JSONP = new Tea.Class({
+  init: function(url, opt){
+    var script = document.createElement('script'),
+        ret = new Tea.Chain(),
+        params = [],
+        time = (new Date).getTime().toString();
+    opt      || (opt = {});
+    opt.data || (opt.data = {});
+
+    opt.data.callback = 'Tea.JSONP.callbacks['+time+']';
+    for(var d in opt.data)
+      if(opt.data.hasOwnProperty(d))
+        params.push(encodeURIComponent(d)+'='+encodeURIComponent(opt.data[d]));
+    params = params.join('&');
+    url += /\?/.test(url) ? '&'+params : '?'+params;
+
+    script.type    = 'text/javascript';
+    script.charset = 'utf-8';
+    script.src     = url;
+    Tea.JSONP.head.appendChild(script);
+
+    Tea.JSONP.callbacks[time] = function(json){
+      delete Tea.JSONP.callbacks[time];
+      Tea.JSONP.head.removeChild(script);
+      ret.succeed(json);
+    }
+    return ret;
+  }
+  },{
+  callbacks: {},
+  head: document.getElementsByTagName('head')[0];
+});
+
 Tea.Util = new Tea.Class({
   timer: new Tea.Class({
     init: function(){
-      this.t = (new Date).getTime();
+      this.set();
     }
     },{
     stop: function(){
-      return (new Date).getTime() - this.t;
+      return (new Date).getTime() - this.time;
+    },
+    set: function(){
+      this.time = (new Date).getTime();
+      return this.time;
     }
   })
 });
