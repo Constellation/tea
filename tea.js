@@ -393,7 +393,7 @@ Tea.JSONP = new Tea.Class({
   }
   },{
   callbacks: {},
-  head: document.getElementsByTagName('head')[0];
+  head: document.getElementsByTagName('head')[0]
 });
 
 Tea.Util = new Tea.Class({
