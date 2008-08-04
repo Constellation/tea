@@ -382,11 +382,11 @@ Tea.JSONP = new Tea.Class({
     script.type    = 'text/javascript';
     script.charset = 'utf-8';
     script.src     = url;
-    document.getElementByTagName('head')[0].appendChild(script);
+    document.getElementsByTagName('head')[0].appendChild(script);
 
     Tea.JSONP.callbacks[time] = function(json){
       delete Tea.JSONP.callbacks[time];
-      document.getElementByTagName('head')[0].removeChild(script);
+      document.getElementsByTagName('head')[0].removeChild(script);
       ret.succeed(json);
     }
     return ret;
