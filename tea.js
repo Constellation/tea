@@ -115,7 +115,7 @@ Tea.Array = {
 
   list: function(arr){
     return Array.prototype.slice.call(arr);
-  },
+  }
 }
 
 /* Tea.Object */
@@ -161,7 +161,7 @@ Tea.Object = {
       if(f(o[key], key, o)) ret[key] = o[key];
     });
     return ret;
-  },
+  }
 
 }
 
