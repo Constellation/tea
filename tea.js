@@ -290,7 +290,8 @@ Tea.Listener = {
   /* Tea.Listener.Event */
   Event: new Tea.Class({
     init: function(src, e){
-      return Tea.Object.update(e, {
+      Tea.Object.update(this, e);
+      Tea.Object.update(this, {
         target         : e.srcElement,
         currentTarget  : src,
         relatedTarget  : e.fromElement? e.fromElement : e.toElement,
