@@ -178,8 +178,11 @@ Tea.Listener = {
   connect: function(src, name, listener){
     if(!src || !name || !listener) return false;
     var sig = new Tea.Listener.Signal({src:src, name:name, listener:listener, connected:false});
-    Tea.Listener._observers.push(sig.connect());
-    return true;
+    var result = sig.connect();
+    if(result){
+      Tea.Listener._observers.push(result);
+      return true;
+    } else return false;
   },
   disconnect: function(sig){
     for(var i=0,l=Tea.Listener._observers;i<l;i++){
