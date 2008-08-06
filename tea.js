@@ -535,7 +535,7 @@ Tea.JSONP = new Tea.Class({
       if(opt.data.hasOwnProperty(d))
         params.push(encodeURIComponent(d)+'='+encodeURIComponent(opt.data[d]));
     params = params.join('&');
-    url += url.indexOf('?')? '&'+params : '?'+params;
+    url += (url.indexOf('?')==-1)? '?'+params : '&'+params;
 
     script.type    = 'text/javascript';
     script.charset = 'utf-8';
