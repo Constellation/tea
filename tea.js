@@ -395,7 +395,7 @@ Tea.Chain = new Tea.Class({
   _pair: new Tea.Class({},{
     ok: function(res){ return res },
     er: function(res){ throw  res },
-    time: 0,
+    time: 0
   })
 },{
   addCallback:  function(fun, t){ return this._push(fun, 'ok', t) },
