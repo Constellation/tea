@@ -176,13 +176,13 @@ Tea.Listener = {
     });
   },
   connect: function(src, name, listener){
-    if(!src || !name || !listener) return false;
+    if(!src || !name || !listener) return null;
     var sig = new Tea.Listener.Signal({src:src, name:name, listener:listener, connected:false});
     var result = sig.connect();
     if(result){
       Tea.Listener._observers.push(result);
-      return true;
-    } else return false;
+      return result;
+    } else return null;
   },
   disconnect: function(sig){
     for(var i=0,l=Tea.Listener._observers.length;i<l;i++){
@@ -191,7 +191,7 @@ Tea.Listener = {
         return Tea.Listener._observers.splice(i, 1);
       }
     }
-    return false;
+    return null;
   },
   /*
    * detect(src, eventname);
