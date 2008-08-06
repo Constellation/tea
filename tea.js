@@ -131,27 +131,177 @@ Tea.Object = {
     for(var i in obj) ret.push(obj[i]);
     return ret;
   },
+
+  update: function(c, o, overwrite){
+      for(var i in o)
+        if(!!overwrite || !c[i]) c[i] = o[i];
+      return c;
+  },
+
+  forEach: function(o, f){
+    var keys = Tea.Object.keys(o);
+    Tea.Array.forEach(keys, function(key, index){
+      f(o[key], key, o);
+    });
+  },
+
+  map: function(o, f){
+    var ret = {};
+    var keys = Tea.Object.keys(o);
+    Tea.Array.forEach(keys, function(key){
+      ret[key] = f(o[key], key, o);
+    });
+    return ret;
+  },
+
+  filter: function(o, f){
+    var ret = {};
+    var keys = Tea.Object.keys(o);
+    Tea.Array.forEach(keys, function(key){
+      if(f(o[key], key, o)) ret[key] = o[key];
+    });
+    return ret;
+  },
+
 }
 
 /* Tea.Listener */
-Tea.Listener = new Tea.Class({
-  init: function(){
-    this._listeners = {};
+Tea.Listener = {
+  _observers : [],
+  _unloadCallback: function(){
+    var l = Tea.Listener._observers;
+    Tea.Array.forEach(l, function(sig, i){
+      if(sig.name !== 'onload' && sig.name !== 'onunload')
+      sig.disconnect();
+    });
   },
-  addEventListener: function(evt, fun){
-    this._listeners[evt] = this._listeners[evt] || [];
-    if(Tea.Array.indexOf(this._listeners[evt], fun) == -1)
-      return this._listeners[evt].push(fun);
+  connect: function(src, name, listener){
+    if(!src || !name || !listener) return false;
+    var sig = new Tea.Listener.Signal({src:src, name:name, listener:listener, connected:false});
+    Tea.Listener._observers.push(sig.connect());
+    return true;
+  },
+  disconnect: function(sig){
+    for(var i=0,l=Tea.Listener._observers;i<l;i++){
+      if(Tea.Listener._observers[i] == sig){
+        sig.disconnect();
+        return Tea.Listener._observers.splice(i, 1);
+      }
+    }
     return false;
   },
-  removeEventListener: function(evt, fun){
-    this._listeners[evt] = this._listeners[evt] || [];
-    var i = Tea.Array.indexOf(this._listeners[evt], fun)
-    if(i==-1) return false;
-    return this._listeners[evt].splice(i, 1)
+  /*
+   * detect(src, eventname);
+   * detect(src);
+   * detect(eventname);
+   *
+   * connected = false のものも検出
+   */
+  detect: function(){
+    var args = arguments;
+    if(args.length == 2){
+      return Tea.Array.filter(Tea.Listener._observers, function(e){
+        return (e.src == args[0] && e.name == args[1]);
+      });
+    } else if(typeof(args[0]) == 'string'){
+      return Tea.Array.filter(Tea.Listener._observers, function(e){
+        return (e.name == args[0]);
+      });
+    } else {
+      return Tea.Array.filter(Tea.Listener._observers, function(e){
+        return (e.src == args[0]);
+      });
+    }
   },
-});
 
+  notify: function(src, name, args){
+    Tea.Array.forEach(Tea.Listener._observers, function(e){
+      if(e.name == name && e.src == src && e.connected)
+        e.listener.apply(src, args);
+    });
+  },
+
+  /* Tea.Listener.Signal */
+  Signal: new Tea.Class({
+    init: function(obj){
+      this.name      = obj.name;
+      this.src       = obj.src;
+      this.DOM       = (obj.src.addEventListener || obj.src.attachEvent)? true : false;
+      this.connected = obj.connected? obj.connected : false;
+      this.listener  = this.getListener(obj);
+    },
+    },{
+    connect: function(){
+      if(this.connected) return null;
+      this.connected = true;
+      if(this.DOM){
+        if(this.src.addEventListener)
+          this.src.addEventListener(this.name.substring(2), this.listener, false);
+        else{
+          this.src.attachEvent(this.name, this.listener);
+        }
+      }
+      return this;
+    },
+    disconnect: function(){
+      if(!this.connected) return null;
+      this.connected = false;
+      if(this.DOM){
+        if(this.src.removeEventListener)
+          this.src.removeEventListener(this.name.substring(2), this.listener, false);
+        else
+          this.src.detachEvent(this.name, this.listener);
+      }
+      return this;
+    },
+    getListener: function(obj){
+      var self = this;
+      if(!this.DOM){
+        if(this.name == 'onload' || this.name == 'onunload'){
+          return function(){
+            obj.listener.apply(self.src, arguments);
+            Tea.Listener.disconnect(self);
+          }
+        } else {
+          return function(){
+            obj.listener.call(self.src, arguments);
+          }
+        }
+      } else {
+        if(this.name == 'onload' || this.name == 'onunload'){
+          return function(e){
+            e = new Tea.Listener.Event(self.src, e);
+            obj.listener.call(self.src, e);
+            Tea.Listener.disconnect(self);
+          }
+        } else {
+          return function(e){
+            e = new Tea.Listener.Event(self.src, e);
+            obj.listener.call(self.src, e);
+          }
+        }
+      }
+    },
+  }),
+
+  /* Tea.Listener.Event */
+  Event: new Tea.Class({
+    init: function(src, e){
+      return Tea.Object.update(e, {
+        target         : e.srcElement,
+        currentTarget  : src,
+        relatedTarget  : e.fromElement? e.fromElement : e.toElement,
+        eventPhase     : (e.srcElement==src)? 2 : 3,
+        stopPropagation: function(){ e.cancelBubble = true },
+        preventDefault : function(){ e.returnValue  = false}
+      }, false);
+    }
+  }),
+};
+
+Tea.Listener.connect(window, 'onunload', Tea.Listener._unloadCallback);
+
+/* Tea.DOM */
 Tea.DOM = new Tea.Class({
   getElementsByClassName: function(name, elm){
     elm || (elm = document);
@@ -192,7 +342,9 @@ Tea.DOM = new Tea.Class({
   }
 });
 
-/* Tea Chain */
+/* Tea Chain
+ * Array baseの中央集中型のdeferred
+ */
 Tea.Chain = new Tea.Class({
   init: function(){
     this._list = [];
@@ -213,12 +365,9 @@ Tea.Chain = new Tea.Class({
     return ret;
   },
   hash: function(obj, time){
-    var keys=[], values=[];
+    var keys = Tea.Object.keys(obj),
+        values = Tea.Array.map(keys, function(key){ return o[key] });
     time || (time = null);
-    for (var i in obj){
-      keys.push(i);
-      values.push(obj[i]);
-    }
     return Tea.Chain.list(values).addCallback(function(res){
       var h = {}
       Tea.Array.forEach(res, function(e, index){
@@ -309,6 +458,7 @@ Tea.Chain = new Tea.Class({
   }
 });
 
+/* Tea.XHR */
 Tea.XHR = new Tea.Class({
   init: function(url, opt){
     var req = Tea.XHR.getXHR(),
@@ -363,6 +513,7 @@ Tea.XHR = new Tea.Class({
   }
 );
 
+/* Tea.JSONP */
 Tea.JSONP = new Tea.Class({
   init: function(url, opt){
     var script = document.createElement('script'),
@@ -383,7 +534,7 @@ Tea.JSONP = new Tea.Class({
       if(opt.data.hasOwnProperty(d))
         params.push(encodeURIComponent(d)+'='+encodeURIComponent(opt.data[d]));
     params = params.join('&');
-    url += /\?/.test(url) ? '&'+params : '?'+params;
+    url += url.indexOf('?')? '&'+params : '?'+params;
 
     script.type    = 'text/javascript';
     script.charset = 'utf-8';
@@ -412,7 +563,43 @@ Tea.Util = new Tea.Class({
   })
 });
 
-
+/* Tea.Cookie */
+/*
+Tea.Cookie = new Tea.Class({
+  init: function(){
+    this.cookie = {};
+    this.toHash();
+  },
+  calculateExpire: function(){
+    calculate((new Date).getTime());
+  }
+  },{
+  toHash: function(){
+    var arr = document.cookie.split(';\s*'),
+        self = this;
+    Tea.Array.forEach(arr, function(e){
+      e = e.replace(/^\s*|\s*$/gi, '');
+      if(/([^=]*)=(.*)/.test(e))
+        self.cookie[decodeURIComponent(RegExp.$1)] = decodeURIComponent(RegExp.$2);
+    });
+  },
+  toCookie: function(){
+    var ret = [];
+    for(var key in this.cookie){
+      ret.push(encodeURIComponent(key)+'='+encodeURIComponent(obj[key]));
+    }
+    document.cookie = ret.join(';');
+  }
+  set: function(key, value){
+    this.cookie[key] = value;
+    this.toCookie();
+  }
+  get: function(key){
+    return key? this.cookie[key] : this.cookie;
+  },
+});
+*/
 function log(){
   if(window.console && console.info) console.info.apply(console, arguments);
 }
+
