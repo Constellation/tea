@@ -185,7 +185,7 @@ Tea.Listener = {
     } else return false;
   },
   disconnect: function(sig){
-    for(var i=0,l=Tea.Listener._observers;i<l;i++){
+    for(var i=0,l=Tea.Listener._observers.length;i<l;i++){
       if(Tea.Listener._observers[i] == sig){
         sig.disconnect();
         return Tea.Listener._observers.splice(i, 1);
