@@ -232,7 +232,7 @@ Tea.Listener = {
       this.DOM       = (obj.src.addEventListener || obj.src.attachEvent)? true : false;
       this.connected = obj.connected? obj.connected : false;
       this.listener  = this.getListener(obj);
-    },
+    }
     },{
     connect: function(){
       if(this.connected) return null;
@@ -284,7 +284,7 @@ Tea.Listener = {
           }
         }
       }
-    },
+    }
   }),
 
   /* Tea.Listener.Event */
@@ -299,7 +299,7 @@ Tea.Listener = {
         preventDefault : function(){ e.returnValue  = false}
       }, false);
     }
-  }),
+  })
 };
 
 Tea.Listener.connect(window, 'onunload', Tea.Listener._unloadCallback);
@@ -511,10 +511,8 @@ Tea.XHR = new Tea.Class({
     function(){ return new ActiveXObject('Msxml2.XMLHTTP'); },
     function(){ return new ActiveXObject('Microsoft.XMLHTTP'); },
     function(){ return new ActiveXObject('Msxml2.XMLHTTP.4.0'); },
-  ],
-
-  }
-);
+  ]
+});
 
 /* Tea.JSONP */
 Tea.JSONP = new Tea.Class({
@@ -547,7 +545,7 @@ Tea.JSONP = new Tea.Class({
     return ret;
   },
   callbacks: {},
-  id: 0,
+  id: 0
 });
 
 Tea.Util = new Tea.Class({
