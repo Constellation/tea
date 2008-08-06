@@ -366,7 +366,7 @@ Tea.Chain = new Tea.Class({
   },
   hash: function(obj, time){
     var keys = Tea.Object.keys(obj),
-        values = Tea.Array.map(keys, function(key){ return o[key] });
+        values = Tea.Array.map(keys, function(key){ return obj[key] });
     time || (time = null);
     return Tea.Chain.list(values).addCallback(function(res){
       var h = {}
