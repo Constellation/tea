@@ -59,9 +59,9 @@ Tea.Array = {
   },
 
   forEach: function(a, f){
-    var r = 0;
-    var l = a.length;
-    var i = l%8;
+    var r = 0,
+        l = a.length,
+        i = l%8;
     if(i>0) do {
       f(a[r],r++,a)
     } while (--i);
@@ -115,7 +115,22 @@ Tea.Array = {
 
   list: function(arr){
     return Array.prototype.slice.call(arr);
-  }
+  },
+
+  times: function(n, fun){
+    var r = 0,
+        i = n%8;
+    if(i>0) do {
+      f(r++)
+    } while (--i);
+    i = parseInt(n >> 3)
+    if(i>0) do {
+      f(r++);f(r++);
+      f(r++);f(r++);
+      f(r++);f(r++);
+      f(r++);f(r++);
+    } while (--i);
+  },
 }
 
 /* Tea.Object */
@@ -382,8 +397,7 @@ Tea.Chain = new Tea.Class({
   },
   loop: function(n, fun){
     var ret= new Tea.Chain(), arr = [];
-    for(var i=0;i<n;arr.push(i++));
-    Tea.Array.forEach(arr, function(e){
+    Tea.Array.times(n, function(e){
       ret.addCallback(function(res){
         return fun.call(this, e);
       });
@@ -472,9 +486,10 @@ Tea.XHR = new Tea.Class({
     opt.method || (opt.method = 'GET');
     opt.data   || (opt.data = {});
 
-    for(var d in opt.data)
-      if(opt.data.hasOwnProperty(d))
-        params.push(encodeURIComponent(d)+'='+encodeURIComponent(opt.data[d]));
+    Tea.Object.forEach(opt.data, function(v, k, o){
+      if(o.hasOwnProperty(k))
+        params.push(encodeURIComponent(k)+'='+encodeURIComponent(v));
+    });
     params = params.join('&');
 
     req.onreadystatechange = function(e){
@@ -489,9 +504,10 @@ Tea.XHR = new Tea.Class({
     if(opt.overrideMimeType && req.overrideMimeType)
       req.overrideMimeType(opt.overrideMimeType);
     if(opt.header){
-      for(var i in opt.header)
-       if (opt.header.hasOwnProperty(i))
-         req.setRequestHeader(i, opt.header[i]);
+      Tea.Object.forEach(opt.header, function(v, k, o){
+        if (o.hasOwnProperty(k))
+          req.setRequestHeader(k, v);
+      });
     }
     if(opt.method.toUpperCase()=='POST')
       req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -532,9 +548,10 @@ Tea.JSONP = new Tea.Class({
       ret.succeed(json);
     }
 
-    for(var d in opt.data)
-      if(opt.data.hasOwnProperty(d))
-        params.push(encodeURIComponent(d)+'='+encodeURIComponent(opt.data[d]));
+    Tea.Object.forEach(opt.data, function(v, k, o){
+      if(o.hasOwnProperty(k))
+        params.push(encodeURIComponent(k)+'='+encodeURIComponent(v));
+    });
     params = params.join('&');
     url += (url.indexOf('?')==-1)? '?'+params : '&'+params;
 
