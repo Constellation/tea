@@ -117,7 +117,7 @@ Tea.Array = {
     return Array.prototype.slice.call(arr);
   },
 
-  times: function(n, fun){
+  times: function(n, f){
     var r = 0,
         i = n%8;
     if(i>0) do {
