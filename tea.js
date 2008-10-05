@@ -445,7 +445,7 @@ Tea.Chain = new Tea.Class({
     var self = this,
         next = 'ok',
         pair = this._list.shift(),
-        timer = new Tea.Util.timer(),
+        timer = new Tea.Util.timer();
     try {
       res = pair[oker].call(this, res, t);
     } catch(e) {
