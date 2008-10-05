@@ -372,11 +372,11 @@ Tea.Chain = new Tea.Class({
     var ret=new Tea.Chain(), num=list.length, c=0, value=[];
     time || (time = null);
     Tea.Array.forEach(list, function(d, index){
-      d.addCallback(function(res){
+      d.add(function(res){
         value[index] = [true, res];
         if(++c==num) ret.succeed(value, time);
       });
-      d.addErrorback(function(res){
+      d.error(function(res){
         value[index] = [false, res];
         if(++c==num) ret.succeed(value, time);
       });
@@ -387,7 +387,7 @@ Tea.Chain = new Tea.Class({
     var keys = Tea.Object.keys(obj),
         values = Tea.Array.map(keys, function(key){ return obj[key] });
     time || (time = null);
-    return Tea.Chain.list(values).addCallback(function(res){
+    return Tea.Chain.list(values).add(function(res){
       var h = {}
       Tea.Array.forEach(res, function(e, index){
         h[keys[index]]=e;
@@ -398,7 +398,7 @@ Tea.Chain = new Tea.Class({
   loop: function(n, fun){
     var ret= new Tea.Chain(), arr = [];
     Tea.Array.times(n, function(e){
-      ret.addCallback(function(res){
+      ret.add(function(res){
         return fun.call(this, e);
       });
     });
@@ -413,23 +413,23 @@ Tea.Chain = new Tea.Class({
     time: 0
   })
 },{
-  addCallback:  function(fun, t){ return this._push(fun, 'ok', t) },
-  addErrorback: function(fun, t){ return this._push(fun, 'er', t) },
-  addCallbackBefore:  function(fun, t){ return this._unshift(fun, 'ok', t) },
-  addErrorbackBefore: function(fun, t){ return this._unshift(fun, 'er', t) },
+  add:  function(fun, t){ return this._push(fun, 'ok', t) },
+  error: function(fun, t){ return this._push(fun, 'er', t) },
+  addBefore:  function(fun, t){ return this._unshift(fun, 'ok', t) },
+  errorBefore: function(fun, t){ return this._unshift(fun, 'er', t) },
   later:        function(t){ return this._later(t) },
   succeed: function(res, t){ return this._start(res, 'ok', t)  },
   failed:  function(res, t){ return this._start(res, 'er', t)  },
   _push: function(fun, oker, t){
     var pair =  new Tea.Chain._pair();
-    t && (pair.time = t);
+    t && (pair.time = t*1000);
     pair[oker] = fun;
     this._list.push(pair);
     return this;
   },
   _unshift: function(fun, oker, t){
     var pair = new Tea.Chain._pair();
-    t && (pair.time = t);
+    t && (pair.time = t*1000);
     pair[oker] = fun;
     this._list.unshift(pair);
     return this;
@@ -437,12 +437,15 @@ Tea.Chain = new Tea.Class({
   _later: function(t){
     if(!t) return this;
     var pair = new Tea.Chain._pair();
-    t? (pair.time = t) : (pair.time = 0);
+    t? (pair.time = t*1000) : (pair.time = 0);
     this._list.push(pair);
     return this;
   },
   _go: function(res, oker, t){
-    var self=this, next='ok', pair=this._list.shift();
+    var self = this,
+        next = 'ok',
+        pair = this._list.shift(),
+        timer = new Tea.Util.timer(),
     try {
       res = pair[oker].call(this, res, t);
     } catch(e) {
@@ -454,11 +457,10 @@ Tea.Chain = new Tea.Class({
       res._list = res._list.concat(this._list);
     } else if(this._list.length > 0){
       if(pair.time){
-        var timer = new Tea.Util.timer();
         var id = setTimeout(function(){
           clearTimeout(id);
-          self._go.call(self, res, next, timer.stop());
-        }, pair.time*1000);
+          self._go.call(self, res, next, pair.time);
+        }, pair.time - timer.stop());
       }
       else this._go(res, next, pair.time);
     }
