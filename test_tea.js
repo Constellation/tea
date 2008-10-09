@@ -367,47 +367,27 @@ Tea.DOM = new Tea.Class({
 Tea.Chain = new Tea.Class({
   init: function(){
     this._chain = [];
+    this._res = null;
+    this._type = 'ok';
+    this._locked = true;
+    this._state = 'still';
   },
   list: function(list, t){
-    var ret   = new Tea.Chain(),
-        num   = list.length,
-        c     = 0,
-        value = [];
-    Tea.Array.forEach(list, function(d, index){
-      if(!(d instanceof Tea.Chain)){
-        var f = d;
-        d = Tea.Chain.add(function(){ return f.call(this) }, t);
-      }
-      d.callbacks(
-        function(res){
-          value[index] = [true, res];
-          if(++c==num) ret.succeed(value);
-        },
-        function(res){
-          value[index] = [false, res];
-          if(++c==num) ret.succeed(value);
-      });
-    });
-    return ret;
+    var ret = new Tea.Chain();
+    ret.list(list, t);
+    return ret.succeed();
   },
-  hash: function(obj, t){
-    var keys = Tea.Object.keys(obj),
-        values = Tea.Array.map(keys, function(key){ return obj[key] });
-    return Tea.Chain.list(values).add(function(res){
-      var h = {}
-      Tea.Array.forEach(res, function(e, index){
-        h[keys[index]]=e;
-      });
-      return h
-    }, t);
+  hash: function(hash, t){
+    var ret = new Tea.Chain();
+    ret.hash(hash, t);
+    return ret.succeed();
   },
   loop: function(n, fun, t){
-    var ret= new Tea.Chain(),
-        self = t || null;
+    var ret= new Tea.Chain();
     Tea.Array.times(n, function(e){
       ret.add(function(res){
         return fun.call(this, e);
-      }, self);
+      }, t);
     });
     return ret.succeed();
   },
@@ -441,17 +421,23 @@ Tea.Chain = new Tea.Class({
     }
   })
 },{
+  // available methods
   add:  function(fun, t){ return this._add(fun, 'ok', 'push', t) },
   error: function(fun, t){ return this._add(fun, 'er', 'push', t) },
   callbacks: function(okfun, erfun, t){ return this._callbacks(okfun, erfun, 'push', t) },
   both: function(fun, t){ return this._callbacks(fun, fun, 'push', t) },
-  addBefore:  function(fun, t){ return this._unshift(fun, 'ok', t) },
-  errorBefore: function(fun, t){ return this._unshift(fun, 'er', t) },
-  later:        function(time, method){ return this._later(time, 'push') },
-  laterBefore: function(time, method){ return this._later(time, 'unshift') },
-  succeed: function(res){ return this._start(res, 'ok')  },
-  fail:  function(res){ return this._start(res, 'er')  },
+  addUnshift:  function(fun, t){ return this._add(fun, 'ok', 'unshift', t) },
+  errorUnshift: function(fun, t){ return this._add(fun, 'er', 'unshift', t) },
+  later: function(time, method){ return this._later(time, 'push') },
+  laterUnshift: function(time, method){ return this._later(time, 'unshift') },
+  lock: function(){ return this._lock() },
+  list: function(list, t){ return this._list(list, t) },
+  hash: function(hash, t){ return this._hash(hash, t) },
+  unlock: function(res, type){ return this._unlock(res, type) },
+  succeed: function(res){ return this._unlock(res, 'ok')  },
+  fail:  function(res){ return this._unlock(res, 'er')  },
 
+  // main
   _add: function(fun, type, method, t){
     var pair = new Tea.Chain._pair();
     pair.t = t;
@@ -459,7 +445,6 @@ Tea.Chain = new Tea.Class({
     this._chain[method](pair);
     return this;
   },
-
   _callbacks: function(okfun, erfun, method, t){
     var pair = new Tea.Chain._pair();
     pair.t = t;
@@ -475,36 +460,87 @@ Tea.Chain = new Tea.Class({
     this._chain[method](pair);
     return this;
   },
-  _go: function(res, type){
+  _list: function(list, t){
+    var num = list.length,
+        c = 0,
+        value = [];
+    return this.add(function(res){
+      var self = this;
+      Tea.Array.forEach(list, function(d, index){
+        if(!(d instanceof Tea.Chain)){
+          var f = d;
+          d = Tea.Chain.add(function(){ return f.call(this, res) }, t);
+        } else if(d._state == 'done'){
+          d.unlock();
+        }
+        d.callbacks(
+        function(res){
+          value[index] = [true, res];
+          if(++c==num) self.succeed(value);
+        },
+        function(res){
+          value[index] = [false, res];
+          if(++c==num) self.succeed(value);
+        });
+      });
+      return this.lock();
+    }, this);
+  },
+  _hash: function(hash, t){
+    var keys = Tea.Object.keys(hash),
+        values = Tea.Array.map(keys, function(key){ return hash[key] });
+    return this.list(values, t).add(function(res){
+      var h = {}
+      Tea.Array.forEach(res, function(e, index){
+        h[keys[index]]=e;
+      });
+      return h
+    });
+  },
+  _lock: function(){
+    this._locked = true;
+    return this;
+  },
+  _unlock: function(res, type){
+    var self = this;
+    res && (this._res = res);
+    type && (this._type = type);
+    this._state = 'process';
+    this._locked = false;
+    var id = setTimeout(function(){
+        id && clearTimeout(id);
+        self._go.call(self);
+    }, 0);
+    return this;
+  },
+  _go: function(){
+    if(this._locked) return this;
     var pair = this._chain.shift(),
         timer = new Tea.Chain._timer();
     try {
-      res = pair[type].call((pair.t || this), res);
+      this._res = pair[this._type].call((pair.t || this), this._res);
     } catch(e) {
-      res = e;
-      type = 'er';
+      this._res = e;
+      this._type = 'er';
     }
-    if(res instanceof Tea.Chain){
-      res.later(pair.time);
-      res._chain = res._chain.concat(this._chain);
+    if(this._res instanceof Tea.Chain && this._res != this){
+      this.lock().laterUnshift(pair.time);
+      this._res.both(function(res){ this.succeed(res) }, function(res){ this.fail(res) }, this);
+      if(this._res._locked) this._res.unlock();
+      this._res = null;
     } else if(this._chain.length > 0){
       if(pair.time){
-        var tmp, self = this;
-        var id = setTimeout(function(){
+        var tmp, self = this,
+        id = setTimeout(function(){
           id && clearTimeout(id);
-          self._go.call(self, res, type);
+          self._go.call(self);
         }, ((tmp = pair.time - timer.stop()) < 0)? 0 : tmp);
       }
-      else this._go(res, type);
+      else this._go();
+    } else {
+      this._state = 'done';
+      this.lock();
     }
-    return this;
-  },
-  _start: function(res, type){
-    var self = this;
-    var id = setTimeout(function(){
-        id && clearTimeout(id);
-        self._go.call(self, res, type);
-    }, 0);
     return this;
   }
 });
@@ -567,17 +603,18 @@ Tea.XHR = new Tea.Class({
 /* Tea.JSONP */
 Tea.JSONP = new Tea.Class({
   init: function(url, opt){
-    var script = document.createElement('script'),
+    var doc = document,
+        script = doc.createElement('script'),
         ret = new Tea.Chain(),
         params = [],
         name = 'callback'+(Tea.JSONP.id++);
     opt      || (opt = {});
     opt.data || (opt.data = {});
 
-    opt.data.callback = 'Tea.JSONP.callbacks.'+name;
+    opt.data[(opt.jsonp || 'callback')] = 'Tea.JSONP.callbacks.'+name;
     Tea.JSONP.callbacks[name] = function(json){
       delete Tea.JSONP.callbacks[name];
-      document.getElementsByTagName('head')[0].removeChild(script);
+      doc.getElementsByTagName('head')[0].removeChild(script);
       ret.succeed(json);
     }
 
@@ -591,13 +628,15 @@ Tea.JSONP = new Tea.Class({
     script.type    = 'text/javascript';
     script.charset = 'utf-8';
     script.src     = url;
-    document.getElementsByTagName('head')[0].appendChild(script);
+    doc.getElementsByTagName('head')[0].appendChild(script);
 
     return ret;
   },
   callbacks: {},
   id: 0
 });
+
+
 
 /* Tea.Cookie */
 /*
